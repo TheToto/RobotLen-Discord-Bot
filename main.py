@@ -1,15 +1,8 @@
-import discord
-from discord.ext import commands
+import threading
 
-from . import settings
-from . import web
+from misc import web_server
+from commands import launch_discord_bot
 
-bot = commands.Bot(command_prefix='>')
-
-
-@bot.command()
-async def ping(ctx):
-    await ctx.send('pong')
-
-bot.run(settings.DISCORD_KEY)
-web.launch_server()
+# For Heroku free dynos
+threading.Thread(target=web_server.launch_web_server).start()
+launch_discord_bot()
