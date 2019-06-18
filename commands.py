@@ -1,6 +1,7 @@
 from discord.ext import commands
 
 from misc import settings
+from youtube import Music
 
 bot = commands.Bot(command_prefix='>')
 
@@ -11,4 +12,5 @@ async def ping(ctx):
 
 
 def launch_discord_bot():
+    bot.add_cog(Music(bot))
     bot.run(settings.DISCORD_KEY)
