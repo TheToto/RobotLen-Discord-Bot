@@ -3,39 +3,20 @@ from collections import deque, namedtuple
 
 import discord
 import typing
-import youtube_dl
 
 from discord.ext import commands
-
-# Suppress noise about console usage from errors
 from discord.ext.commands import Context
 
-from misc.embed import queue_embed
+from misc.embed import queue_embed, select_music_embed
 
+from pytube import YouTube
 
-youtube_dl.utils.bug_reports_message = lambda: ''
-
-ytdl_format_options = {
-    'format': 'bestaudio/worstaudio/worst',
-    'extractaudio': True,
-    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
-    'restrictfilenames': True,
-    'noplaylist': True,
-    'nocheckcertificate': True,
-    'ignoreerrors': False,
-    'logtostderr': False,
-    'quiet': True,
-    'no_warnings': True,
-    'default_search': 'auto',
-    'source_address': '0.0.0.0'  # bind to ipv4 since ipv6 addresses cause issues sometimes
-}
+from misc.googleapis import YoutubeAPI
 
 ffmpeg_options = {
     'options': '-vn',
     'before_options': "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
 }
-
-ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
 
 class YTDLSource(discord.PCMVolumeTransformer):
@@ -50,31 +31,37 @@ class YTDLSource(discord.PCMVolumeTransformer):
     @classmethod
     async def query(cls, keyword, loop=None):
         loop = loop or asyncio.get_event_loop()
-        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(keyword, download=False))
+        data = YoutubeAPI().search(keyword)
         return data
 
     @classmethod
-    def create_player(cls, data):
-        filename = data['url']
+    def create_player(cls, song, volume):
+        id = ''
+        if 'id' in song.data:
+            id = song.data['id']['videoId']
+        else:
+            id = song.data['resourceId']['videoId']
+        stream = YouTube('https://www.youtube.com/watch?v={}'.format(id)).streams.filter(only_audio=True)
+        filename = stream.first().url
         print(filename)
-        return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
+        return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=song.data, volume=volume)
 
 
-Song = namedtuple("Song", "channel player requester")
+Song = namedtuple("Song", "channel data requester")
 
 queues = {}  # type : Dict[discord.Server, Queue]
 
 
 class Queue:
     def __init__(self, guild):
+        self.vol = 0.5
         self.guild = guild
         self.playing = False
         self.current = None
         self.queue = deque()  # The queue contains items of type Song
-        self.skip_votes = set()
 
-    def add(self, data):
-        self.queue.append(data)
+    def add(self, channel, data, user):
+        self.queue.append(Song(channel, data, user))
 
     def is_playing(self):
         """ Check if the bot is playing music. """
@@ -91,7 +78,7 @@ class Queue:
 
         self.playing = True
         self.current = self.queue.popleft()
-        player = YTDLSource.create_player(self.current)
+        player = YTDLSource.create_player(self.current, self.vol)
         self.guild.voice_client.play(player, after=self.play_next)
 
     def skip(self):
@@ -102,6 +89,10 @@ class Queue:
     def clear(self):
         """ Clear the queue """
         self.queue.clear()
+
+    def volume(self, vol):
+        self.guild.voice_client.source.volume = vol
+        self.vol = vol
 
 
 class Music(commands.Cog):
@@ -139,15 +130,43 @@ class Music(commands.Cog):
 
         async with ctx.typing():
             search = await YTDLSource.query(song, self.bot.loop)
-            if 'entries' in search:
-                search = search['entries'][0]
 
-            queue.add(search)
-            if queue.is_playing():
-                await ctx.send('Ajouté à la queue : {}'.format(search["title"]))
+        if search is None:
+            return await ctx.send("Pas de résultats.")
+
+        numbers = [u"\u0030\u20E3", u"\u0031\u20E3", u"\u0032\u20E3", u"\u0033\u20E3", u"\u0034\u20E3", u"\u0035\u20E3"]
+
+        def check(r, u):
+            return u == ctx.message.author
+
+        if len(search) > 1:
+            message = await ctx.send(embed=select_music_embed(search))
+            try:
+                # Launch in background
+                async def put_emoji():
+                    for i in range(len(search)):
+                        await message.add_reaction(numbers[i])
+                    await message.add_reaction(u"\u274C")
+                asyncio.ensure_future(put_emoji())
+
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=15.0, check=check)
+            except asyncio.TimeoutError:
+                await message.clear_reactions()
+                return await ctx.send("Pas de réponse...")
             else:
-                await ctx.send('Vous écoutez : {}'.format(search["title"]))
-                queue.play_next()
+                await message.delete()
+                if reaction.emoji not in numbers:
+                    return
+                search = search[numbers.index(str(reaction.emoji))]
+        else:
+            search = search[0]
+
+        queue.add(ctx.message.channel, search, ctx.message.author)
+        if queue.is_playing():
+            await ctx.send('Ajouté à la queue : {}'.format(search["snippet"]["title"]))
+        else:
+            await ctx.send('Vous écoutez : {}'.format(search["snippet"]["title"]))
+            queue.play_next()
 
     @commands.command()
     async def pause(self, ctx):
@@ -173,10 +192,13 @@ class Music(commands.Cog):
             queue.skip()
 
     @commands.command()
-    async def volume(self, ctx, volume: int):
+    async def volume(self, ctx, volume: typing.Optional[int]):
         """Changes the player's volume"""
-        ctx.voice_client.source.volume = volume / 100
-        await ctx.send("Changed volume to {}%".format(volume))
+        queue = queues[ctx.message.guild]
+        if volume is None:
+            return await ctx.send("Volume actuel : {}%".format(int(queue.vol * 100)))
+        queue.volume(volume / 100)
+        await ctx.send("Volume à to {}%".format(volume))
 
     @commands.command()
     async def stop(self, ctx):
@@ -184,6 +206,18 @@ class Music(commands.Cog):
         queue = queues[ctx.message.guild]
         queue.clear()
         ctx.voice_client.stop()
+
+    @commands.command()
+    async def restart(self, ctx):
+        """Restart the current music"""
+        queue = queues[ctx.message.guild]
+        if queue.current is None:
+            return await ctx.send("Désolé, pas de musique à redémarrer")
+        queue.queue.append(queue.current)
+        if queue.is_playing():
+            queue.skip()
+        else:
+            queue.play_next()
 
     @commands.command()
     async def queue(self, ctx):
@@ -195,6 +229,7 @@ class Music(commands.Cog):
     @volume.before_invoke
     @resume.before_invoke
     @pause.before_invoke
+    @restart.before_invoke
     async def ensure_voice(self, ctx):
         await self.ensure_queue(ctx)
         if ctx.voice_client is None:
