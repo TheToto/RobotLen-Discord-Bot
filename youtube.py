@@ -239,3 +239,7 @@ class Music(commands.Cog):
     async def ensure_queue(self, ctx):
         if ctx.message.guild not in queues:
             queues[ctx.message.guild] = Queue(ctx.guild)
+
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, before: discord.Member, after: discord.Member):
+        print("lol")

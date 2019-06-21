@@ -37,6 +37,26 @@ class YoutubeAPI:
             return response['items']
         return []
 
+    def search_channel(self, keyword: str):
+        request = self.youtube.search().list(
+            part="snippet",
+            type="channel",
+            maxResults=1,
+            q=keyword
+        )
+        response = request.execute()
+        if len(response['items']) < 1:
+            return None
+        id = response['items'][0]['id']['channelId']
+        request = self.youtube.channels().list(
+            part="snippet,contentDetails,statistics",
+            id=id
+        )
+        response = request.execute()
+        if len(response['items']) < 1:
+            return None
+        return response['items'][0]
+
     def search(self, keyword: str):
         res = re.search(self.regex_video, keyword)
         if res is not None:

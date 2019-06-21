@@ -31,3 +31,18 @@ def select_music_embed(items):
         q_str = 'Euh wtf.'
     res.add_field(name='Recherche', value=q_str, inline=False)
     return res
+
+
+def channel_embed(channel):
+    subtext = "Cette chaîne cache ses abonnés :(" if channel['statistics']['hiddenSubscriberCount'] \
+        else "Cette chaîne possède **{}** abonné(s).".format(channel['statistics']['subscriberCount'])
+    description = "{}\nElle a **{}** vues, et **{}** vidéos."\
+        .format(subtext, channel['statistics']['viewCount'], channel['statistics']['videoCount'])
+
+    res = embeds.Embed(title=channel['snippet']['title'], type="rich", description=description,
+                       url="https://www.youtube.com/channel/{}".format(channel['id']))
+    res.set_author(name="YouTube", url="https://youtube.com/",
+                   icon_url="https://cdn.discordapp.com/attachments/480416542014701581/484672637751001100/YouTube-icon.png")
+    res.set_footer(text=channel['snippet']['description'])
+    res.set_thumbnail(url=channel['snippet']['thumbnails']['medium']['url'])
+    return res
