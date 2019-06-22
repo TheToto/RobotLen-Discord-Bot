@@ -10,7 +10,9 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from misc import embed
+from misc.embed import wiki_embed
 from misc.googleapis import YoutubeAPI
+from misc.helpers import make_request, make_post_request
 
 
 class Basic(commands.Cog):
@@ -61,11 +63,39 @@ class Basic(commands.Cog):
     async def reverse(self, ctx: Context, url: str):
         """Google reverse search"""
         async with ctx.typing():
-            async with aiohttp.ClientSession() as session:
-                async with session.post('https://mrisa-app.herokuapp.com/search',
-                                        json={'image_url': url, 'resized_images': False}) as r:
-                    if r.status == 200:
-                        js = await r.json(content_type=None)
-                        await ctx.send(embed=embed.reverse_embed(js))
-                    else:
-                        await ctx.send("J'ai pas réussi à faire mon job")
+            js = await make_post_request('https://mrisa-app.herokuapp.com/search',
+                                         json={'image_url': url, 'resized_images': False})
+            if js is not None:
+                await ctx.send(embed=embed.reverse_embed(js))
+            else:
+                await ctx.send("J'ai pas réussi à faire mon job")
+
+    @commands.command()
+    async def wiki(self, ctx: Context, keyword: str):
+        """Search on wikipedia"""
+        async with ctx.typing():
+            js = await make_request("https://fr.wikipedia.org/w/api.php?action=query&list=search&srnamespace=0"
+                                    "&srlimit=1&format=json&srsearch={}".format(keyword))
+            if js is not None:
+                pageid = js['query']['search'][0]['pageid']
+                article = await make_request("https://fr.wikipedia.org/w/api.php?format=json&action=query&prop"
+                                             "=extracts|pageimages&exintro=&explaintext=&pageids={}".format(pageid))
+                for page in article['query']['pages']:
+                    return await ctx.send(embed=wiki_embed(article['query']['pages'][page]))
+            else:
+                await ctx.send("J'ai pas réussi à faire mon job")
+
+    @commands.command()
+    async def learn_life(self, ctx: Context):
+        """Random article on wikipedia"""
+        async with ctx.typing():
+            js = await make_request("https://fr.wikipedia.org/w/api.php?action=query&generator=random&grnnamespace=0"
+                                    "&format=json")
+            if js is not None:
+                pageid = next(iter(js['query']['pages']))
+                article = await make_request("https://fr.wikipedia.org/w/api.php?format=json&action=query&prop"
+                                             "=extracts|pageimages&exintro=&explaintext=&pageids={}".format(pageid))
+                for page in article['query']['pages']:
+                    return await ctx.send(embed=wiki_embed(article['query']['pages'][page]))
+            else:
+                await ctx.send("J'ai pas réussi à faire mon job")

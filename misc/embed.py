@@ -42,7 +42,8 @@ def channel_embed(channel):
     res = embeds.Embed(title=channel['snippet']['title'], type="rich", description=description,
                        url="https://www.youtube.com/channel/{}".format(channel['id']))
     res.set_author(name="YouTube", url="https://youtube.com/",
-                   icon_url="https://cdn.discordapp.com/attachments/480416542014701581/484672637751001100/YouTube-icon.png")
+                   icon_url="https://cdn.discordapp.com/attachments/480416542014701581/484672637751001100/YouTube"
+                            "-icon.png")
     res.set_footer(text=channel['snippet']['description'])
     res.set_thumbnail(url=channel['snippet']['thumbnails']['medium']['url'])
     return res
@@ -64,4 +65,17 @@ def reverse_embed(js):
                        title=js['titles'][0] if len(js['titles']) > 0 else "Pas de titre")
     res.set_thumbnail(url=js['similar_images'][0] if len(js['similar_images']) > 0 else "")
     res.set_footer(text="Cette image me fait penser à : {}".format(js['best_guess']))
+    return res
+
+
+def wiki_embed(article):
+    res = embeds.Embed(type="rich",
+                       title=article['title'],
+                       description=article['extract'][:300],
+                       url="https://fr.wikipedia.org/?curid={}".format(article['pageid']))
+    res.set_author(name="Wikipédia", url="https://wikipedia.org",
+                   icon_url="https://cdn.discordapp.com/attachments/480416542014701581/480761752686952448/Wikipedia"
+                            "-globe-icon.png")
+    if 'thumbnail' in article:
+        res.set_thumbnail(url=article['thumbnail']['source'].replace('px-', "0px-"))
     return res
