@@ -1,8 +1,13 @@
 import os
 
 import re
+from io import BytesIO
+
 import googleapiclient.discovery
 import googleapiclient.errors
+from discord import FFmpegPCMAudio
+
+from google.cloud import texttospeech
 
 from misc import settings
 
@@ -83,3 +88,16 @@ class YoutubeAPI:
         return response['items']
 
 
+class TextToSpeech:
+    def __init__(self):
+        self.client = texttospeech.TextToSpeechClient()
+
+    def process(self, sentence: str, lang: str = "fr-FR"):
+        synthesis_input = texttospeech.types.SynthesisInput(text=sentence)
+        voice = texttospeech.types.VoiceSelectionParams(
+            language_code=lang,
+            ssml_gender=texttospeech.enums.SsmlVoiceGender.NEUTRAL)
+        audio_config = texttospeech.types.AudioConfig(
+            audio_encoding=texttospeech.enums.AudioEncoding.OGG_OPUS)
+        response = self.client.synthesize_speech(synthesis_input, voice, audio_config)
+        return response.audio_content
