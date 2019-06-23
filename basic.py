@@ -2,12 +2,12 @@ import asyncio
 import math
 from random import randint
 
-from discord import utils, FFmpegPCMAudio
+from discord import utils
 from discord.ext import commands
 from discord.ext.commands import Context
 
 from misc import embed
-from misc.googleapis import YoutubeAPI, TextToSpeech
+from misc.googleapis import YoutubeAPI
 from misc.helpers import make_request, make_post_request
 
 
@@ -95,14 +95,3 @@ class Basic(commands.Cog):
                     return await ctx.send(embed=embed.wiki_embed(article['query']['pages'][page]))
             else:
                 await ctx.send("J'ai pas réussi à faire mon job")
-
-    @commands.command()
-    async def speak(self, ctx: Context, *, sentence: str):
-        if ctx.voice_client is not None and ctx.voice_client.is_connected():
-            audio = TextToSpeech().process(sentence)
-            filename = "output-{}.ogg".format(ctx.guild.id)
-            with open(filename, "wb") as file:
-                file.write(audio)
-            ctx.voice_client.play(FFmpegPCMAudio(filename))
-        else:
-            await ctx.send("Tu ne m'entendra pas...")

@@ -60,6 +60,13 @@ class Queue:
         self.current = None
         self.queue = deque()  # The queue contains items of type Song
 
+
+    @classmethod
+    def get(cls, guild):
+        if guild not in queues:
+            queues[guild] = Queue(guild)
+        return queues[guild]
+
     def add(self, channel, data, user):
         self.queue.append(Song(channel, data, user))
 
@@ -126,7 +133,7 @@ class Music(commands.Cog):
             return await self.resume.callback(self, ctx)
 
         song = song.strip("< >`")
-        queue = queues[ctx.message.guild]
+        queue = Queue.get(ctx.guild)
 
         async with ctx.typing():
             search = await YTDLSource.query(song, self.bot.loop)
@@ -180,12 +187,12 @@ class Music(commands.Cog):
         if ctx.voice_client.is_paused():
             ctx.voice_client.resume()
         else:
-            queue = queues[ctx.message.guild]
+            queue = Queue.get(ctx.guild)
             queue.play_next()
 
     @commands.command()
     async def skip(self, ctx):
-        queue = queues[ctx.message.guild]
+        queue = Queue.get(ctx.guild)
         if not queue.is_playing():
             await ctx.send("Not playing")
         else:
@@ -194,7 +201,7 @@ class Music(commands.Cog):
     @commands.command()
     async def volume(self, ctx, volume: typing.Optional[int]):
         """Changes the player's volume"""
-        queue = queues[ctx.message.guild]
+        queue = Queue.get(ctx.guild)
         if volume is None:
             return await ctx.send("Volume actuel : {}%".format(int(queue.vol * 100)))
         queue.volume(volume / 100)
@@ -203,14 +210,14 @@ class Music(commands.Cog):
     @commands.command()
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
-        queue = queues[ctx.message.guild]
+        queue = Queue.get(ctx.guild)
         queue.clear()
         ctx.voice_client.stop()
 
     @commands.command()
     async def restart(self, ctx):
         """Restart the current music"""
-        queue = queues[ctx.message.guild]
+        queue = Queue.get(ctx.guild)
         if queue.current is None:
             return await ctx.send("Désolé, pas de musique à redémarrer")
         queue.queue.append(queue.current)
@@ -222,7 +229,7 @@ class Music(commands.Cog):
     @commands.command()
     async def queue(self, ctx):
         """Display the guild queue"""
-        queue = queues[ctx.message.guild]
+        queue = Queue.get(ctx.guild)
         await ctx.send(embed=queue_embed(queue))
 
     @play.before_invoke
@@ -231,15 +238,5 @@ class Music(commands.Cog):
     @pause.before_invoke
     @restart.before_invoke
     async def ensure_voice(self, ctx):
-        await self.ensure_queue(ctx)
         if ctx.voice_client is None:
             await self.join.callback(self, ctx, channel=None)
-
-    @queue.before_invoke
-    async def ensure_queue(self, ctx):
-        if ctx.message.guild not in queues:
-            queues[ctx.message.guild] = Queue(ctx.guild)
-
-    @commands.Cog.listener()
-    async def on_voice_state_update(self, before: discord.Member, after: discord.Member):
-        print("lol")

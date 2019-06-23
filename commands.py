@@ -3,6 +3,7 @@ from discord.ext import commands
 
 from basic import Basic
 from misc import settings
+from speak import Speak
 from youtube import Music
 
 bot = commands.Bot(command_prefix='>')
@@ -62,4 +63,5 @@ async def on_message(message: Message):
 def launch_discord_bot():
     bot.add_cog(Music(bot))
     bot.add_cog(Basic(bot))
+    bot.add_cog(Speak(bot))
     bot.run(settings.DISCORD_KEY)
