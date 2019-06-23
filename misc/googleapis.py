@@ -1,4 +1,5 @@
 import os
+import random
 
 import re
 from io import BytesIO
@@ -92,12 +93,20 @@ class TextToSpeech:
     def __init__(self):
         self.client = texttospeech.TextToSpeechClient()
 
-    def process(self, sentence: str, lang: str = "fr-FR"):
+    def process(self, sentence: str, lang: str = "fr-FR-Wavenet-D"):
+        if lang is None:
+            lang = "fr-FR-Wavenet-D"
         synthesis_input = texttospeech.types.SynthesisInput(text=sentence)
         voice = texttospeech.types.VoiceSelectionParams(
-            language_code=lang,
-            ssml_gender=texttospeech.enums.SsmlVoiceGender.NEUTRAL)
+            language_code=lang[:5],
+            name=lang,
+            )
         audio_config = texttospeech.types.AudioConfig(
             audio_encoding=texttospeech.enums.AudioEncoding.OGG_OPUS)
         response = self.client.synthesize_speech(synthesis_input, voice, audio_config)
         return response.audio_content
+
+    def choose_voice(self, keyword):
+        list = self.client.list_voices(keyword[:5])
+        good_list = [v for v in list.voices if keyword in v.name]
+        return random.choice(good_list).name

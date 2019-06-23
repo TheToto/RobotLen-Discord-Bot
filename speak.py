@@ -12,7 +12,7 @@ class Speak(commands.Cog):
         self.bot = bot
 
     @staticmethod
-    def speak_tts(guild, sentence, lang="fr-FR"):
+    def speak_tts(guild, sentence, lang=None):
         audio = TextToSpeech().process(sentence, lang)
         if guild.voice_client.is_playing():
             guild.voice_client.stop()
@@ -20,8 +20,18 @@ class Speak(commands.Cog):
 
     @commands.command()
     async def speak(self, ctx: Context, *, sentence: str):
+        """Speak in voice channel"""
         if ctx.voice_client is not None and ctx.voice_client.is_connected():
             Speak.speak_tts(ctx.guild, sentence)
+        else:
+            await ctx.send("Tu ne m'entendra pas...")
+
+    @commands.command()
+    async def speakin(self, ctx: Context, lang: str, *, sentence: str):
+        """Speak in voice channel with the specified voice"""
+        if ctx.voice_client is not None and ctx.voice_client.is_connected():
+            lang = TextToSpeech().choose_voice(lang)
+            self.speak_tts(ctx.guild, sentence, lang)
         else:
             await ctx.send("Tu ne m'entendra pas...")
 
@@ -51,5 +61,5 @@ class Speak(commands.Cog):
             await ctx.send("Tu ne m'entendra pas...")
             raise Exception("Not in voice channel")
         if youtube.Queue.get(ctx.guild).is_playing():
-            await ctx.send("Il faut d'abord stopper YouTube (>stop)")
+            await ctx.send("Il faut d'abord stopper YouTube (`>stop`)")
             raise Exception("Youtube playing")

@@ -16,11 +16,13 @@ async def update_presence():
 
 @bot.command()
 async def ping(ctx):
+    """Let's play ping pong"""
     await ctx.send('pong')
 
 
 @bot.command()
 async def merci(ctx):
+    """Send 'SIMB'"""
     await ctx.send('SIMB !')
 
 
