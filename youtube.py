@@ -9,7 +9,7 @@ from discord.ext.commands import Context
 
 from misc.embed import queue_embed, select_music_embed
 
-from pytube import YouTube
+import pafy
 
 from misc.googleapis import YoutubeAPI
 
@@ -41,8 +41,8 @@ class YTDLSource(discord.PCMVolumeTransformer):
             id = song.data['id']['videoId']
         else:
             id = song.data['resourceId']['videoId']
-        stream = YouTube('https://www.youtube.com/watch?v={}'.format(id)).streams.filter(only_audio=True)
-        filename = stream.first().url
+        ytdl = pafy.new(id, False)
+        filename = ytdl.getbestaudio().url
         print(filename)
         return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=song.data, volume=volume)
 

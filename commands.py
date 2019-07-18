@@ -17,7 +17,7 @@ async def update_presence():
 @bot.command()
 async def ping(ctx):
     """Let's play ping pong"""
-    await ctx.send('pong')
+    await ctx.send('Pong ! {} ms'.format(round(bot.latency, 2)))
 
 
 @bot.command()
