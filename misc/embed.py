@@ -25,7 +25,7 @@ def select_music_embed(items):
     q_str = ''
     i = 0
     for item in items:
-        q_str += str(i) + ". " + item.get('snippet').get('title') + "\n"
+        q_str += str(i) + ". " + item.title + "\n"
         i += 1
     if q_str == '':
         q_str = 'Euh wtf.'

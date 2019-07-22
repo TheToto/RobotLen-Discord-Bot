@@ -4,7 +4,7 @@ from discord.ext import commands
 from basic import Basic
 from misc import settings
 from speak import Speak
-from youtube import Music
+from music_wavelink import Music
 
 bot = commands.Bot(command_prefix='>')
 

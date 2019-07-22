@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
-import youtube
+import music_wavelink
 from misc.googleapis import TextToSpeech
 from misc.helpers import play_audio_bytes
 
@@ -43,8 +43,7 @@ class Speak(commands.Cog):
         guild = member.guild
         if not guild.voice_client or not guild.voice_client.is_connected() or guild.voice_client.is_playing():
             return
-        if youtube.Queue.get(guild).is_playing():
-            return
+        # FIXME : Check music queue
 
         voice_channel = guild.voice_client.channel
         if before.channel != voice_channel and after.channel == voice_channel:
@@ -60,6 +59,6 @@ class Speak(commands.Cog):
                 or not ctx.guild.voice_client.is_connected():
             await ctx.send("Tu ne m'entendra pas...")
             raise Exception("Not in voice channel")
-        if youtube.Queue.get(ctx.guild).is_playing():
-            await ctx.send("Il faut d'abord stopper YouTube (`>stop`)")
-            raise Exception("Youtube playing")
+        # if youtube.Queue.get(ctx.guild).is_playing(): FIXME
+        #    await ctx.send("Il faut d'abord stopper YouTube (`>stop`)")
+        #    raise Exception("Youtube playing")
