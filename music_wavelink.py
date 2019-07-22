@@ -273,12 +273,12 @@ class Music(commands.Cog):
 
         splited = time.split(':')
         if len(splited) == 3:
-            res = splited[0] * 3600 + splited[1] * 60 + splited[2]
+            res = int(splited[0]) * 3600 + int(splited[1]) * 60 + int(splited[2])
         elif len(splited) == 2:
-            res = splited[0] * 60 + splited[1]
+            res = int(splited[0]) * 60 + int(splited[1])
         elif len(splited) == 1:
-            res = splited[0]
+            res = int(splited[0])
         else:
             return await ctx.send("Ce n'est pas le bon format. mm:ss")
 
-        await player.seek(res * 1000)
+        await player.seek(int(res) * 1000)
