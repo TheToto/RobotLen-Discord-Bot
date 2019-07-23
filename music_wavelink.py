@@ -114,7 +114,7 @@ class Music(commands.Cog):
                 raise discord.DiscordException('Tu n\'est pas dans un salon vocal !')
 
         player = self.bot.wavelink.get_player(ctx.guild.id)
-        await ctx.send(f'Je rejoins **`{channel.name}`** !', delete_after=15)
+        await ctx.send(f'Je rejoins **`{channel.name}`** !')
         await player.connect(channel.id)
 
     @commands.command()
@@ -130,17 +130,21 @@ class Music(commands.Cog):
 
         numbers = [u"\u0030\u20E3", u"\u0031\u20E3", u"\u0032\u20E3", u"\u0033\u20E3", u"\u0034\u20E3", u"\u0035\u20E3"]
 
-        def check(r, u):
-            return u == ctx.message.author
-
         if len(tracks) > 1:
             message = await ctx.send(embed=select_music_embed(tracks))
+
+            def check(r: discord.Reaction, u):
+                return u == ctx.message.author and r.message.id == message.id
+
             try:
-                # Launch in background
+                # Launch in backgroun
                 async def put_emoji():
-                    for i in range(len(tracks)):
-                        await message.add_reaction(numbers[i])
-                    await message.add_reaction(u"\u274C")
+                    try:
+                        for i in range(len(tracks)):
+                            await message.add_reaction(numbers[i])
+                        await message.add_reaction(u"\u274C")
+                    except discord.NotFound:
+                        pass
 
                 asyncio.ensure_future(put_emoji())
 
@@ -162,16 +166,16 @@ class Music(commands.Cog):
 
         controller = self.get_controller(ctx)
         await controller.queue.put(track)
-        await ctx.send(f'{str(track)} a été ajouté à la queue.', delete_after=15)
+        await ctx.send(f'{str(track)} a été ajouté à la queue.')
 
     @commands.command()
     async def pause(self, ctx):
         """Pause the player."""
         player = self.bot.wavelink.get_player(ctx.guild.id)
         if not player.current:
-            return await ctx.send('Aucune musique n\'est en cours !', delete_after=15)
+            return await ctx.send('Aucune musique n\'est en cours !')
 
-        await ctx.send('Je me pause !', delete_after=15)
+        await ctx.send('Je me pause !')
         await player.set_pause(True)
 
     @commands.command()
@@ -179,9 +183,9 @@ class Music(commands.Cog):
         """Resume the player from a paused state."""
         player = self.bot.wavelink.get_player(ctx.guild.id)
         if not player.paused:
-            return await ctx.send('Aucune musique n\'est en cours !', delete_after=15)
+            return await ctx.send('Aucune musique n\'est en cours !')
 
-        await ctx.send('C\'est reparti !', delete_after=15)
+        await ctx.send('C\'est reparti !')
         await player.set_pause(False)
 
     @commands.command(aliases=['next'])
@@ -190,9 +194,9 @@ class Music(commands.Cog):
         player = self.bot.wavelink.get_player(ctx.guild.id)
 
         if not player.current:
-            return await ctx.send('Aucune musique n\'est en cours !', delete_after=15)
+            return await ctx.send('Aucune musique n\'est en cours !')
 
-        await ctx.send('On passe à la suivante !', delete_after=15)
+        await ctx.send('On passe à la suivante !')
         await player.stop()
 
     @commands.command(aliases=['vol'])
