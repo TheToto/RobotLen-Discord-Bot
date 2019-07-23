@@ -2,7 +2,7 @@ from discord import Activity, ActivityType, Guild, Message, utils
 from discord.ext import commands
 
 from basic import Basic
-from misc import settings
+from misc import settings, log
 from speak import Speak
 from music_wavelink import Music
 
@@ -44,18 +44,21 @@ async def on_ready():
 
 @bot.event
 async def on_guild_join(guild: Guild):
-    print("New Guild : {} !".format(guild.name))
+    log.info("New Guild : {} !".format(guild.name))
     await update_presence()
 
 
 @bot.event
 async def on_guild_remove(guild: Guild):
-    print("Guild removed : {} !".format(guild.name))
+    log.info("Guild removed : {} !".format(guild.name))
     await update_presence()
 
 
 @bot.listen()
 async def on_message(message: Message):
+    if message.guild is None and message.author is not bot.user:
+        await log.log_dm(message)
+        return
     lower = message.content.lower()
     if "aurore" in lower:
         emoji = utils.get(bot.emojis, name='aurtong')
