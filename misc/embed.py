@@ -1,17 +1,19 @@
 from discord import embeds
+from wavelink import Track
 
 
-def queue_embed(queue):
+def queue_embed(queue, current : Track):
     res = embeds.Embed(title="Musiques en attente", type="rich")
-    np_str = "Aucune musique en cours"
-    if queue.is_playing():
-        np_str = queue.current.data.get('snippet').get('title')
+    np_str = "Aucune musique en lecture."
+    if current is not None:
+        np_str = current.title
+
     res.add_field(name="Lecture en cours", value=np_str, inline=False)
 
     q_str = ''
     i = 1
-    for item in queue.queue:
-        q_str += str(i) + ". " + item.data.get('snippet').get('title') + "\n"
+    for item in queue:
+        q_str += str(i) + ". " + item.title + "\n"
         i += 1
     if q_str == '':
         q_str = 'Aucune musique en attente.'

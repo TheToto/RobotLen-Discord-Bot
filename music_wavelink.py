@@ -1,7 +1,6 @@
 import asyncio
-import datetime
+import time
 import discord
-import humanize
 import itertools
 import re
 import sys
@@ -12,7 +11,7 @@ import wavelink
 from discord.ext import commands
 from typing import Union
 from misc import settings
-from misc.embed import select_music_embed
+from misc.embed import select_music_embed, queue_embed
 
 RURL = re.compile('https?:\/\/(?:www\.)?.+')
 
@@ -229,13 +228,9 @@ class Music(commands.Cog):
         player = self.bot.wavelink.get_player(ctx.guild.id)
         controller = self.get_controller(ctx)
 
-        if not player.current or not controller.queue._queue:
-            return await ctx.send('Il n\'y a rien dans la queue.', delete_after=20)
-
         upcoming = list(itertools.islice(controller.queue._queue, 0, 5))
 
-        fmt = '\n'.join(f'**`{str(song)}`**' for song in upcoming)
-        embed = discord.Embed(title=f'Upcoming - Next {len(upcoming)}', description=fmt)
+        embed = queue_embed(upcoming, player.current)
 
         await ctx.send(embed=embed)
 
@@ -264,14 +259,14 @@ class Music(commands.Cog):
         await player.seek(0)
 
     @commands.command(aliases=['goto'])
-    async def seek(self, ctx, *, time):
+    async def seek(self, ctx, *, seek):
         """Seek the current song to hh:mm:ss."""
         player = self.bot.wavelink.get_player(ctx.guild.id)
 
         if not player.current:
             return await ctx.send('Aucune musique n\'est en cours !')
 
-        splited = time.split(':')
+        splited = seek.split(':')
         if len(splited) == 3:
             res = int(splited[0]) * 3600 + int(splited[1]) * 60 + int(splited[2])
         elif len(splited) == 2:
@@ -282,3 +277,5 @@ class Music(commands.Cog):
             return await ctx.send("Ce n'est pas le bon format. mm:ss")
 
         await player.seek(int(res) * 1000)
+        await ctx.send("Musique à {} sur {}".format(time.strftime('%H:%M:%S', time.gmtime(res)),
+                                                    time.strftime('%H:%M:%S', time.gmtime(player.current.duration / 1000))))
