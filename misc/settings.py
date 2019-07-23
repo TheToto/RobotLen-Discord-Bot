@@ -8,8 +8,7 @@ DISCORD_KEY = os.environ.get('DISCORD_KEY')  # Discord API KEY
 COMMAND_PREFIX = '>'
 
 LOG_CHANNEL = os.environ.get('DISCORD_LOG_CHANNEL', None)  # The discord channel to send logs (optional)
-DM_GUILD = os.environ.get('DISCORD_DM_GUILD', None)  # The guild to place DMs (optional)
-DM_SECTION = os.environ.get('DISCORD_DM_SECTION', None)  # The section in DM_GUILD to place DMs (optional)
+DM_SECTION = os.environ.get('DISCORD_DM_SECTION', None)  # The section to place DMs (optional)
 
 TRUSTED_USERS = os.environ.get('DISCORD_TRUSTED_USERS', '').split(',')  # List of trusted users for advanced commands
 INSULTS = os.environ.get('INSULTS', '').split(',')
