@@ -2,12 +2,13 @@ import asyncio
 import math
 from random import randint
 
+import typing
 from discord import utils
 from discord.ext import commands
 from discord.ext.commands import Context
 
 from misc import embed
-from misc.googleapis import YoutubeAPI
+from misc.googleapis import YoutubeAPI, CloudVision
 from misc.helpers import make_request, make_post_request
 
 
@@ -56,11 +57,15 @@ class Basic(commands.Cog):
         await send_tranz(None)
 
     @commands.command()
-    async def reverse(self, ctx: Context, url: str):
+    async def reverse(self, ctx: Context, link: typing.Optional[str]):
         """Google reverse search"""
+        if link is None and len(ctx.message.attachments) > 0:
+            link = ctx.message.attachments[0].url
+        if link is None:
+            return
         async with ctx.typing():
             js = await make_post_request('https://mrisa-app.herokuapp.com/search',
-                                         json={'image_url': url, 'resized_images': False})
+                                         json={'image_url': link, 'resized_images': False})
             if js is not None:
                 await ctx.send(embed=embed.reverse_embed(js))
             else:
@@ -95,3 +100,28 @@ class Basic(commands.Cog):
                     return await ctx.send(embed=embed.wiki_embed(article['query']['pages'][page]))
             else:
                 await ctx.send("J'ai pas réussi à faire mon job")
+
+    @commands.command()
+    async def vision(self, ctx: Context, *, link: typing.Optional[str]):
+        """Detect labels of image"""
+        if link is None and len(ctx.message.attachments) > 0:
+            link = ctx.message.attachments[0].url
+        if link is None:
+            return
+        labels = CloudVision().label(link)
+        res = ''
+        for label in labels:
+            res += '{} : {}%\n'.format(label.description, round(label.score * 100))
+        await ctx.send("Je trouve sur cette image : \n{}".format(res))
+
+    @commands.command()
+    async def read(self, ctx: Context, *, link: typing.Optional[str]):
+        """Detect labels of image"""
+        if link is None and len(ctx.message.attachments) > 0:
+            link = ctx.message.attachments[0].url
+        if link is None:
+            return
+        text = CloudVision().read(link)
+        if text is None:
+            return await ctx.send("Je ne peux rien lire sur cette image.")
+        await ctx.send("Je lis sur cette image en {} : \n{}".format(text.locale, text.description))

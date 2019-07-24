@@ -1,9 +1,12 @@
 import os
+import urllib3
 import random
 
 import googleapiclient.discovery
 import googleapiclient.errors
 from google.cloud import texttospeech
+from google.cloud import vision
+from google.cloud.vision import types
 
 from misc import settings
 
@@ -57,3 +60,25 @@ class TextToSpeech:
         list = self.client.list_voices(keyword[:5])
         good_list = [v for v in list.voices if keyword in v.name]
         return random.choice(good_list).name
+
+
+class CloudVision:
+    def __init__(self):
+        self.client = vision.ImageAnnotatorClient()
+
+    def get_image(self, link :str):
+        http = urllib3.PoolManager()
+        response = http.request('GET', link)
+        file = response.data
+        image = types.Image(content=file)
+        return image
+
+    def label(self, link: str):
+        image = self.get_image(link)
+        response = self.client.label_detection(image=image)
+        return response.label_annotations
+
+    def read(self, link: str):
+        image = self.get_image(link)
+        response = self.client.text_detection(image=image)
+        return response.text_annotations[0]
