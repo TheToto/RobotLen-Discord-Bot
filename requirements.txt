@@ -1,4 +1,5 @@
 discord.py==1.2.2
+
 python-dotenv==0.10.3
 PyNaCl==1.3.0
 
@@ -7,6 +8,9 @@ wavelink==0.2.8
 google-auth==1.6.3
 google-auth-httplib2==0.0.3
 google-auth-oauthlib==0.4.0
+
 google-cloud-texttospeech==0.4.0
 google-cloud-vision==0.38.0
+google-cloud-translate==1.6.0
+
 google-api-python-client==1.7.9

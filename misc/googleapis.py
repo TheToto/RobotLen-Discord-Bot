@@ -7,6 +7,7 @@ import googleapiclient.errors
 from google.cloud import texttospeech
 from google.cloud import vision
 from google.cloud.vision import types
+from google.cloud import translate
 
 from misc import settings
 
@@ -82,3 +83,13 @@ class CloudVision:
         image = self.get_image(link)
         response = self.client.text_detection(image=image)
         return response.text_annotations[0]
+
+class Translate:
+    def __init__(self):
+        self.client = translate.Client()
+
+    def translate(self, text: str, into: str = "fr"):
+        translation = self.client.translate(
+            text,
+            target_language=into)
+        return translation

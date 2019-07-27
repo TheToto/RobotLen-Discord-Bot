@@ -6,11 +6,11 @@ from misc import settings, log
 from speak import Speak
 from music_wavelink import Music
 
-bot = commands.Bot(command_prefix='>')
+bot = commands.Bot(command_prefix=settings.COMMAND_PREFIX)
 
 
 async def update_presence():
-    name = "{} serveurs".format(len(bot.guilds))
+    name = "{} serveurs ({}help)".format(len(bot.guilds), settings.COMMAND_PREFIX)
     await bot.change_presence(activity=Activity(name=name, type=ActivityType.listening, details="Details"))
 
 

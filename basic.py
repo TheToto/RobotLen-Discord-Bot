@@ -8,7 +8,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from misc import embed
-from misc.googleapis import YoutubeAPI, CloudVision
+from misc.googleapis import YoutubeAPI, CloudVision, Translate
 from misc.helpers import make_request, make_post_request
 
 
@@ -116,7 +116,7 @@ class Basic(commands.Cog):
 
     @commands.command()
     async def read(self, ctx: Context, *, link: typing.Optional[str]):
-        """Detect labels of image"""
+        """Perform an OCR of the image"""
         if link is None and len(ctx.message.attachments) > 0:
             link = ctx.message.attachments[0].url
         if link is None:
@@ -125,3 +125,14 @@ class Basic(commands.Cog):
         if text is None:
             return await ctx.send("Je ne peux rien lire sur cette image.")
         await ctx.send("Je lis sur cette image en {} : \n{}".format(text.locale, text.description))
+
+    @commands.command()
+    async def translate(self, ctx: Context, *, text: str):
+        """Translate the text into french"""
+        await ctx.invoke(self.translatein, lang="fr", text=text)
+
+    @commands.command()
+    async def translatein(self, ctx: Context, lang: str, *, text: str):
+        """Translate the text into `lang`"""
+        res = Translate().translate(text, lang)
+        await ctx.send("Traduction {} -> {} :\n{}".format(res['detectedSourceLanguage'], lang, res['translatedText']))
