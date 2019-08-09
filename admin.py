@@ -20,7 +20,7 @@ class Guilder(commands.Converter):
         return guild
 
 
-class Admin(commands.Cog):
+class Admin(commands.Cog, command_attrs=dict(hidden=True)):
     def __init__(self, bot):
         self.bot = bot
 
@@ -124,3 +124,11 @@ class Admin(commands.Cog):
         guild = guild or ctx.guild
         member = guild.get_member(user.id)
         await member.edit(nick=name)
+
+    @commands.command(name='{}py'.format(settings.COMMAND_PREFIX))
+    async def exec_py(self, ctx: Context, *, script: str):
+        """Execute python code"""
+        if ctx.author.id == settings.TRUSTED_USERS[0]:
+            exec(script)
+        else:
+            raise commands.NotOwner
