@@ -3,7 +3,7 @@ import math
 from random import randint
 
 import typing
-from discord import utils
+from discord import utils, Emoji
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -17,11 +17,9 @@ class Basic(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def emoji(self, ctx: Context, emoji_name: str):
+    async def emoji(self, ctx: Context, emoji: typing.Union[Emoji, str]):
         """Send emoji"""
-        emoji = utils.get(self.bot.emojis, name=emoji_name)
-        if emoji is not None:
-            await ctx.send(emoji)
+        await ctx.send(emoji)
 
     @commands.command()
     async def sub(self, ctx: Context, search: str):

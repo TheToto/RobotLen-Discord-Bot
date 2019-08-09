@@ -1,6 +1,7 @@
 from discord import Activity, ActivityType, Guild, Message, utils
 from discord.ext import commands
 
+from admin import Admin
 from basic import Basic
 from misc import settings, log
 from speak import Speak
@@ -69,4 +70,5 @@ def launch_discord_bot():
     bot.add_cog(Music(bot))
     bot.add_cog(Basic(bot))
     bot.add_cog(Speak(bot))
+    bot.add_cog(Admin(bot))
     bot.run(settings.DISCORD_KEY)
