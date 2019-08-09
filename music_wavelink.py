@@ -59,20 +59,15 @@ class Music(commands.Cog):
     async def start_nodes(self):
         await self.bot.wait_until_ready()
 
-        hosts = settings.LAVALINK_HOST.split(',')
-        ports = settings.LAVALINK_PORT.split(',')
-        passwords = settings.LAVALINK_PASSWORD.split(',')
-        uris = settings.LAVALINK_URI.split(',')
-
-        for i in range(len(hosts)):
-            node = await self.bot.wavelink.initiate_node(host=hosts[i],
-                                                         port=int(ports[i]),
-                                                         rest_uri=uris[i],
-                                                         password=passwords[i],
+        for i in range(len(settings.LAVALINK_HOST)):
+            node = await self.bot.wavelink.initiate_node(host=settings.LAVALINK_HOST[i],
+                                                         port=settings.LAVALINK_PORT[i],
+                                                         rest_uri=settings.LAVALINK_URI[i],
+                                                         password=settings.LAVALINK_PASSWORD[i],
                                                          identifier='node{}'.format(i),
                                                          region='eu-west')
             node.set_hook(self.on_event_hook)
-        self.ping_server.start(len(hosts))
+        self.ping_server.start(len(settings.LAVALINK_HOST))
 
     @tasks.loop(seconds=30)
     async def ping_server(self, n):
