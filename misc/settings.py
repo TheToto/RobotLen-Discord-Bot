@@ -5,7 +5,7 @@ load_dotenv()
 
 # Discord
 DISCORD_KEY = os.environ.get('DISCORD_KEY')  # Discord API KEY
-COMMAND_PREFIX = '>'
+COMMAND_PREFIX = "'"
 
 LOG_CHANNEL = os.environ.get('DISCORD_LOG_CHANNEL', None)  # The discord channel to send logs (optional)
 DM_SECTION = os.environ.get('DISCORD_DM_SECTION', None)  # The section to place DMs (optional)

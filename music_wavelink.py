@@ -1,5 +1,6 @@
 import asyncio
 import time
+
 import discord
 import itertools
 import re
@@ -8,7 +9,7 @@ import traceback
 
 import typing
 import wavelink
-from discord.ext import commands
+from discord.ext import commands, tasks
 from typing import Union
 from misc import settings
 from misc.embed import select_music_embed, queue_embed
@@ -58,17 +59,26 @@ class Music(commands.Cog):
     async def start_nodes(self):
         await self.bot.wait_until_ready()
 
-        # Initiate our nodes. For this example we will use one server.
-        # Region should be a discord.py guild.region e.g sydney or us_central (Though this is not technically required)
-        node = await self.bot.wavelink.initiate_node(host=settings.LAVALINK_HOST,
-                                                     port=int(settings.LAVALINK_PORT),
-                                                     rest_uri=settings.LAVALINK_URI,
-                                                     password=settings.LAVALINK_PASSWORD,
-                                                     identifier='TEST',
-                                                     region='western_europe')
+        hosts = settings.LAVALINK_HOST.split(',')
+        ports = settings.LAVALINK_PORT.split(',')
+        passwords = settings.LAVALINK_PASSWORD.split(',')
+        uris = settings.LAVALINK_URI.split(',')
 
-        # Set our node hook callback
-        node.set_hook(self.on_event_hook)
+        for i in range(len(hosts)):
+            node = await self.bot.wavelink.initiate_node(host=hosts[i],
+                                                         port=int(ports[i]),
+                                                         rest_uri=uris[i],
+                                                         password=passwords[i],
+                                                         identifier='node{}'.format(i),
+                                                         region='eu-west')
+            node.set_hook(self.on_event_hook)
+        self.ping_server.start(len(hosts))
+
+    @tasks.loop(seconds=30)
+    async def ping_server(self, n):
+        for i in range(n):
+            node = self.bot.wavelink.get_node('node{}'.format(i))
+            await node.ping()
 
     async def on_event_hook(self, event):
         """Node hook callback."""
@@ -124,9 +134,10 @@ class Music(commands.Cog):
             query = f'ytsearch:{query}'
 
         tracks = await self.bot.wavelink.get_tracks(f'{query}')
-        tracks = tracks[:5]
         if not tracks:
             return await ctx.send('Could not find any songs with that query.')
+
+        tracks = tracks[:5]
 
         numbers = [u"\u0030\u20E3", u"\u0031\u20E3", u"\u0032\u20E3", u"\u0033\u20E3", u"\u0034\u20E3", u"\u0035\u20E3"]
 
@@ -282,4 +293,5 @@ class Music(commands.Cog):
 
         await player.seek(int(res) * 1000)
         await ctx.send("Musique à {} sur {}".format(time.strftime('%H:%M:%S', time.gmtime(res)),
-                                                    time.strftime('%H:%M:%S', time.gmtime(player.current.duration / 1000))))
+                                                    time.strftime('%H:%M:%S',
+                                                                  time.gmtime(player.current.duration / 1000))))
