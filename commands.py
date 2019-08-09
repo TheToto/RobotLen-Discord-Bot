@@ -59,7 +59,6 @@ async def on_guild_remove(guild: Guild):
 async def on_message(message: Message):
     if message.guild is None and message.author is not bot.user:
         await log.log_dm(message)
-        return
     lower = message.content.lower()
     if "aurore" in lower:
         emoji = utils.get(bot.emojis, name='aurtong')

@@ -68,7 +68,7 @@ class Admin(commands.Cog):
         return await message.delete()
 
     @commands.command(name='{}clearreact'.format(settings.COMMAND_PREFIX))
-    async def react_message(self, ctx: Context, message: typing.Optional[Message]):
+    async def clearreact_message(self, ctx: Context, message: typing.Optional[Message]):
         """Clear Reacts of a message"""
         message = message or ctx.message
         return await message.clear_reactions()
@@ -107,20 +107,20 @@ class Admin(commands.Cog):
 
     @commands.command(name='{}unban'.format(settings.COMMAND_PREFIX))
     async def unban_user(self, ctx: Context, guild: typing.Optional[Guilder], user: User, *, reason: typing.Optional[str]):
-        """Kick a user from a guild"""
+        """Unban a user from a guild"""
         guild = guild or ctx.guild
         await guild.unban(user, reason=reason)
 
     @commands.command(name='{}moveto'.format(settings.COMMAND_PREFIX))
     async def moveto_user(self, ctx: Context, guild: typing.Optional[Guilder], user: User, channel: typing.Optional[VoiceChannel]):
-        """Kick a user from a guild"""
+        """Move a user to an other VoiceChannel"""
         guild = guild or ctx.guild
         member = guild.get_member(user.id)
         await member.move_to(channel)
 
     @commands.command(name='{}nick'.format(settings.COMMAND_PREFIX))
     async def setname_user(self, ctx: Context, guild: typing.Optional[Guilder], user: User, *, name: typing.Optional[str]):
-        """Kick a user from a guild"""
+        """Change the nickname of a user"""
         guild = guild or ctx.guild
         member = guild.get_member(user.id)
         await member.edit(nick=name)
