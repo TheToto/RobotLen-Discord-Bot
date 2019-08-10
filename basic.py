@@ -9,7 +9,7 @@ from discord.ext.commands import Context
 
 from misc import embed
 from misc.googleapis import YoutubeAPI, CloudVision, Translate
-from misc.helpers import make_request, make_post_request
+from misc.helpers import make_request, make_post_request, get_last_image
 
 
 class Basic(commands.Cog):
@@ -17,7 +17,7 @@ class Basic(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def emoji(self, ctx: Context, emoji: typing.Union[Emoji, str]):
+    async def emoji(self, ctx: Context, emoji: Emoji):
         """Send emoji"""
         await ctx.send(emoji)
 
@@ -57,10 +57,7 @@ class Basic(commands.Cog):
     @commands.command()
     async def reverse(self, ctx: Context, link: typing.Optional[str]):
         """Google reverse search"""
-        if link is None and len(ctx.message.attachments) > 0:
-            link = ctx.message.attachments[0].url
-        if link is None:
-            return
+        link = await get_last_image(ctx, link)
         async with ctx.typing():
             js = await make_post_request('https://mrisa-app.herokuapp.com/search',
                                          json={'image_url': link, 'resized_images': False})
@@ -102,10 +99,7 @@ class Basic(commands.Cog):
     @commands.command()
     async def vision(self, ctx: Context, *, link: typing.Optional[str]):
         """Detect labels of image"""
-        if link is None and len(ctx.message.attachments) > 0:
-            link = ctx.message.attachments[0].url
-        if link is None:
-            return
+        link = await get_last_image(ctx, link)
         labels = CloudVision().label(link)
         res = ''
         for label in labels:
@@ -115,10 +109,7 @@ class Basic(commands.Cog):
     @commands.command()
     async def read(self, ctx: Context, *, link: typing.Optional[str]):
         """Perform an OCR of the image"""
-        if link is None and len(ctx.message.attachments) > 0:
-            link = ctx.message.attachments[0].url
-        if link is None:
-            return
+        link = await get_last_image(ctx, link)
         text = CloudVision().read(link)
         if text is None:
             return await ctx.send("Je ne peux rien lire sur cette image.")
