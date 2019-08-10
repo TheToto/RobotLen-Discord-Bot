@@ -1,5 +1,7 @@
 import aiohttp
+import typing
 from discord import FFmpegPCMAudio
+from discord.ext.commands import Context, BadArgument
 
 
 async def make_request(url: str):
@@ -19,3 +21,16 @@ def play_audio_bytes(guild, bytes):
     with open(filename, "wb") as file:
         file.write(bytes)
     guild.voice_client.play(FFmpegPCMAudio(filename))
+
+
+async def get_last_image(ctx: Context, link: typing.Optional[str]):
+    if link is None and len(ctx.message.attachments) > 0:
+        link = ctx.message.attachments[0].url
+    if link is None:
+        async for message in ctx.channel.history(limit=5):
+            if len(message.attachments) > 0:
+                link = message.attachments[0].url
+                break
+    if link is None:
+        raise BadArgument("Image introuvable")
+    return link

@@ -1,5 +1,9 @@
+import sys
+import traceback
+
 from discord import Activity, ActivityType, Guild, Message, utils
 from discord.ext import commands
+from discord.ext.commands import Context, CommandError
 
 from admin import Admin
 from basic import Basic
@@ -53,6 +57,18 @@ async def on_guild_join(guild: Guild):
 async def on_guild_remove(guild: Guild):
     log.info("Guild removed : {} !".format(guild.name))
     await update_presence()
+
+
+@bot.event
+async def on_command_error(ctx: Context, error: CommandError):
+    if hasattr(ctx.command, 'on_error'):
+        return
+
+    if isinstance(error, commands.UserInputError):
+        return await ctx.send_help(ctx.command)
+
+    print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
+    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
 @bot.listen()
